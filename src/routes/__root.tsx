@@ -75,11 +75,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Agro Redeem Africa — Farm-Fresh Marketplace" },
       { name: "description", content: "Buy & sell farm produce across Africa. Real-time orders for farmers and buyers." },
       { name: "author", content: "Agro Redeem Africa" },
-      { property: "og:title", content: "Agro Redeem Africa" },
-      { property: "og:description", content: "A premium farm-to-buyer marketplace built for African farmers." },
+      { property: "og:title", content: "Agro Redeem Africa — Farm-Fresh Marketplace" },
+      { property: "og:description", content: "Buy & sell farm produce across Africa. Real-time orders for farmers and buyers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Agro Redeem Africa — Farm-Fresh Marketplace" },
+      { name: "twitter:description", content: "Buy & sell farm produce across Africa. Real-time orders for farmers and buyers." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/585126ce-dd8a-46f2-82bb-578eb38610b3/id-preview-d8b95e41--6b44fb4f-8a50-4e82-a065-12bf5d78cd90.lovable.app-1778919224588.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/585126ce-dd8a-46f2-82bb-578eb38610b3/id-preview-d8b95e41--6b44fb4f-8a50-4e82-a065-12bf5d78cd90.lovable.app-1778919224588.png" },
     ],
     links: [
       {
