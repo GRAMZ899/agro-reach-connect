@@ -62,6 +62,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 pb-24">{children}</main>
 
+      <footer className="px-5 py-6 border-t bg-muted/40 text-center space-y-2">
+        <div className="flex justify-center gap-4 text-xs font-semibold text-muted-foreground">
+          <Link to="/about" className="hover:text-primary">About</Link>
+          <span>·</span>
+          <Link to="/contact" className="hover:text-primary">Contact</Link>
+          <span>·</span>
+          <Link to="/browse" className="hover:text-primary">Market</Link>
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          © {new Date().getFullYear()} Agro Redeem Africa · Transforming agriculture across Africa
+        </p>
+      </footer>
+
       {user && navItems.length > 0 && (
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-background/95 backdrop-blur border-t z-20">
           <div className="grid" style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}>
