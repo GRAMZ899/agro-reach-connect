@@ -43,11 +43,17 @@ export function OrderDialog({
   if (!product) return null;
   const total_ugx = Number(qty || 0) * Number(product.price_ugx || 0);
   const total_usd = Number(qty || 0) * Number(product.price_usd || 0);
+  const numQty = Number(qty || 0);
+  const overStock = numQty > Number(product.quantity_available || 0);
 
   async function submit() {
     const parsed = schema.safeParse({ quantity: qty, buyer_phone: phone, buyer_location: location, notes });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
+      return;
+    }
+    if (parsed.data.quantity > Number(product!.quantity_available || 0)) {
+      toast.error(`Only ${product!.quantity_available} ${product!.unit} available`);
       return;
     }
     setLoading(true);
@@ -83,8 +89,12 @@ export function OrderDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Quantity ({product.unit})</Label>
-            <Input type="number" min="0.1" step="0.1" value={qty} onChange={(e) => setQty(e.target.value)} />
+            <div className="flex items-center justify-between">
+              <Label>Quantity ({product.unit})</Label>
+              <span className="text-[11px] text-muted-foreground">{product.quantity_available} {product.unit} available</span>
+            </div>
+            <Input type="number" min="0.1" max={product.quantity_available} step="0.1" value={qty} onChange={(e) => setQty(e.target.value)} />
+            {overStock && <p className="text-[11px] text-destructive mt-1">Exceeds available stock</p>}
           </div>
           <div>
             <Label>Your phone</Label>
@@ -102,7 +112,7 @@ export function OrderDialog({
             <span className="text-sm text-muted-foreground">Total</span>
             <span className="font-bold text-primary text-lg">{formatPrice(total_ugx, total_usd, currency)}</span>
           </div>
-          <Button onClick={submit} disabled={loading} className="w-full rounded-full">
+          <Button onClick={submit} disabled={loading || overStock || numQty <= 0} className="w-full rounded-full">
             {loading ? "Placing…" : "Place Order"}
           </Button>
         </div>
