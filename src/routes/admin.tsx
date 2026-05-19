@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
@@ -45,12 +44,14 @@ function AdminPage() {
     const [o, p, pr] = await Promise.all([
       supabase.from("orders").select("*, products(title)").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("products").select("*, profiles!products_seller_id_fkey(full_name, phone, email, location)").order("created_at", { ascending: false }),
+      supabase.from("products").select("*").order("created_at", { ascending: false }),
     ]);
     setOrders(o.data ?? []);
     setProfiles(p.data ?? []);
     setProducts(pr.data ?? []);
   }
+
+  function sellerProfileOf(p: any) { return profiles.find((x) => x.id === p.seller_id); }
 
   async function setStatus(id: string, status: string) {
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
@@ -159,18 +160,30 @@ function AdminPage() {
           </TabsContent>
 
           <TabsContent value="products" className="space-y-2 mt-4">
-            {products.map((p) => (
-              <Card key={p.id} className="p-3 shadow-card border-0 flex gap-3 items-center">
-                <div className="w-14 h-14 rounded-xl bg-secondary overflow-hidden shrink-0">
-                  {p.image_url && <img src={p.image_url} alt="" className="w-full h-full object-cover" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate">{p.title}</div>
-                  <div className="text-xs text-primary font-bold">{formatPrice(p.price_ugx, p.price_usd, currency)} / {p.unit}</div>
-                  <div className="text-[11px] text-muted-foreground truncate">by {p.profiles?.full_name} · {p.location}</div>
-                </div>
-              </Card>
-            ))}
+            {products.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No products listed yet.</p>}
+            {products.map((p) => {
+              const s = sellerProfileOf(p);
+              return (
+                <Card key={p.id} className="p-3 shadow-card border-0 flex gap-3 items-center">
+                  <div className="w-14 h-14 rounded-xl bg-secondary overflow-hidden shrink-0">
+                    {p.image_url && <img src={p.image_url} alt="" className="w-full h-full object-cover" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm truncate">{p.title}</div>
+                    <div className="text-xs text-primary font-bold">{formatPrice(p.price_ugx, p.price_usd, currency)} / {p.unit}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {p.quantity_available} {p.unit} left · {p.location}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      by {s?.full_name ?? "—"} · {s?.phone ?? ""}
+                    </div>
+                  </div>
+                  <span className={`text-[9px] uppercase font-bold tracking-wide px-2 py-0.5 rounded-full ${p.available ? "bg-success/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                    {p.available ? "Live" : "Sold"}
+                  </span>
+                </Card>
+              );
+            })}
           </TabsContent>
         </Tabs>
       </div>
