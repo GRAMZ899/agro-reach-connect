@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 pb-24">{children}</main>
 
-      <footer className="px-5 py-6 border-t bg-muted/40 text-center space-y-2">
+      <footer className={`px-5 py-6 border-t bg-muted/40 text-center space-y-2 ${user && navItems.length > 0 ? "mb-20" : ""}`}>
         <div className="flex justify-center gap-4 text-xs font-semibold text-muted-foreground">
           <Link to="/about" className="hover:text-primary">About</Link>
           <span>·</span>
