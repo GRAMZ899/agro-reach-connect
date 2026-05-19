@@ -19,22 +19,26 @@ export function useAuth() {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        setRolesLoaded(false);
         setTimeout(() => loadProfileAndRoles(s.user.id), 0);
       } else {
         setRoles([]);
         setProfile(null);
+        setRolesLoaded(true);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) loadProfileAndRoles(data.session.user.id);
+      else setRolesLoaded(true);
       setLoading(false);
     });
     return () => subscription.unsubscribe();
@@ -47,10 +51,11 @@ export function useAuth() {
     ]);
     setRoles((r ?? []).map((x: any) => x.role));
     setProfile(p as any);
+    setRolesLoaded(true);
   }
 
   const isAdmin = roles.includes("admin");
   const isSeller = roles.includes("seller") || isAdmin;
   const isBuyer = roles.includes("buyer") || isAdmin;
-  return { session, user, roles, profile, loading, isAdmin, isSeller, isBuyer };
+  return { session, user, roles, profile, loading, rolesLoaded, isAdmin, isSeller, isBuyer };
 }

@@ -14,7 +14,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/admin")({ component: AdminPage });
 
 function AdminPage() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading, rolesLoaded } = useAuth();
   const { currency } = useCurrency();
   const router = useRouter();
   const [orders, setOrders] = useState<any[]>([]);
@@ -23,9 +23,10 @@ function AdminPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) router.navigate({ to: "/auth" });
-    else if (!isAdmin) router.navigate({ to: "/" });
-  }, [user, isAdmin, loading, router]);
+    if (!user) { router.navigate({ to: "/auth" }); return; }
+    if (!rolesLoaded) return;
+    if (!isAdmin) router.navigate({ to: "/" });
+  }, [user, isAdmin, loading, rolesLoaded, router]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -57,6 +58,9 @@ function AdminPage() {
     toast.success("Updated");
   }
 
+  if (loading || !rolesLoaded) {
+    return <AppShell><div className="p-10 text-center text-muted-foreground text-sm">Loading admin…</div></AppShell>;
+  }
   if (!isAdmin) return <AppShell><div className="p-6 text-center text-muted-foreground">Access denied.</div></AppShell>;
 
   const stats = [

@@ -1,5 +1,5 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { Sprout, Store, Package, ShieldCheck, LogOut } from "lucide-react";
+import { Store, Package, ShieldCheck, LogOut, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
@@ -28,9 +28,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex flex-col max-w-md mx-auto relative shadow-float">
       <header className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-hero flex items-center justify-center">
-            <Sprout className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <img
+            src="/agro-redeem-africa.jpg"
+            alt="Agro Redeem Africa"
+            className="w-10 h-10 rounded-xl object-cover ring-1 ring-border"
+          />
           <div>
             <div className="font-display font-bold text-base leading-tight">Agro Redeem</div>
             <div className="text-[10px] text-muted-foreground -mt-0.5">AFRICA</div>
