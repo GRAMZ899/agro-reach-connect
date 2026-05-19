@@ -29,6 +29,17 @@ function AuthPage() {
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingVerify, setPendingVerify] = useState<string | null>(null);
+
+  async function resendVerification(addr: string) {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: addr,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Verification email re-sent");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,13 +47,18 @@ function AuthPage() {
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       setLoading(false);
-      if (error) return toast.error(error.message);
+      if (error) {
+        if (/confirm|verified|verify/i.test(error.message)) {
+          setPendingVerify(email.trim());
+        }
+        return toast.error(error.message);
+      }
       toast.success("Welcome back!");
       router.navigate({ to: "/" });
     } else {
       const parsed = signupSchema.safeParse({ full_name: fullName, email, password, phone, location });
       if (!parsed.success) { setLoading(false); return toast.error(parsed.error.issues[0].message); }
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: parsed.data.email,
         password: parsed.data.password,
         options: {
@@ -57,9 +73,37 @@ function AuthPage() {
       });
       setLoading(false);
       if (error) return toast.error(error.message);
-      toast.success("Account created!");
-      router.navigate({ to: "/" });
+      if (data.session) {
+        toast.success("Account created!");
+        router.navigate({ to: "/" });
+      } else {
+        setPendingVerify(parsed.data.email);
+        toast.success("Check your email to verify your account");
+      }
     }
+  }
+
+  if (pendingVerify) {
+    return (
+      <AppShell>
+        <div className="px-5 pt-10 pb-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-secondary mx-auto flex items-center justify-center">
+            <Sprout className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="font-display text-2xl font-bold mt-4">Verify your email</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            We sent a verification link to<br /><strong className="text-foreground">{pendingVerify}</strong>.
+            Open it to activate your account, then come back to sign in.
+          </p>
+          <Button onClick={() => resendVerification(pendingVerify)} variant="outline" className="rounded-full mt-6">
+            Resend email
+          </Button>
+          <button onClick={() => { setPendingVerify(null); setMode("login"); }} className="block mx-auto mt-4 text-sm text-muted-foreground underline">
+            Back to sign in
+          </button>
+        </div>
+      </AppShell>
+    );
   }
 
   return (
