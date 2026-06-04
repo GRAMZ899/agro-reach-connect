@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="hh-green" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2f9e44"/>
+      <stop offset="100%" stop-color="#1b6b2c"/>
+    </linearGradient>
+    <linearGradient id="hh-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6c453"/>
+      <stop offset="100%" stop-color="#c7891f"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#hh-green)"/>
+  <!-- wheat stalk / harvest -->
+  <path d="M32 14c0 6-4 9-4 14s4 8 4 14" stroke="url(#hh-gold)" stroke-width="2.5" stroke-linecap="round"/>
+  <g fill="url(#hh-gold)">
+    <ellipse cx="26" cy="22" rx="3.2" ry="1.6" transform="rotate(-30 26 22)"/>
+    <ellipse cx="38" cy="22" rx="3.2" ry="1.6" transform="rotate(30 38 22)"/>
+    <ellipse cx="25" cy="30" rx="3.4" ry="1.7" transform="rotate(-30 25 30)"/>
+    <ellipse cx="39" cy="30" rx="3.4" ry="1.7" transform="rotate(30 39 30)"/>
+    <ellipse cx="26" cy="38" rx="3.2" ry="1.6" transform="rotate(-30 26 38)"/>
+    <ellipse cx="38" cy="38" rx="3.2" ry="1.6" transform="rotate(30 38 38)"/>
+  </g>
+  <!-- connectivity arc: farmer ↔ buyer -->
+  <path d="M14 50c6-6 30-6 36 0" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" fill="none" opacity="0.95"/>
+  <circle cx="14" cy="50" r="3" fill="url(#hh-gold)"/>
+  <circle cx="50" cy="50" r="3" fill="url(#hh-gold)"/>
+</svg>

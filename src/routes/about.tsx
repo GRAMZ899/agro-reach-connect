@@ -7,8 +7,8 @@ export const Route = createFileRoute("/about")({
   component: AboutPage,
   head: () => ({
     meta: [
-      { title: "About Agro Redeem Africa — Transforming the Maize Trade" },
-      { name: "description", content: "Agro Redeem Africa connects farmers directly to buyers and modernises post-harvest handling across Africa." },
+      { title: "About Harvest Hub — Trusted Agricultural Marketplace" },
+      { name: "description", content: "Harvest Hub connects verified farmers directly to buyers and modernises post-harvest handling across Africa." },
     ],
   }),
 });
@@ -36,7 +36,7 @@ function AboutPage() {
       <div className="px-5 pt-6 space-y-5">
         <div className="bg-card rounded-3xl p-5 shadow-card space-y-3">
           <p className="text-sm leading-relaxed text-foreground/90">
-            <strong>Agro Redeem Africa</strong> is an agricultural technology initiative focused on transforming the maize trade
+            <strong>Harvest Hub</strong> is an agricultural technology initiative focused on transforming the maize trade
             sector by connecting farmers directly to reliable buyers and improving post-harvest handling systems.
           </p>
           <p className="text-sm leading-relaxed text-muted-foreground">

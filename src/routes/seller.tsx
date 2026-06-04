@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Package, Bell, Trash2 } from "lucide-react";
+import { Plus, Package, Bell, Trash2, BadgeCheck, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { useCurrency } from "@/lib/currency";
 import { formatPrice } from "@/lib/currency";
 import { ProductForm } from "@/components/ProductForm";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/seller")({ component: SellerHome });
 
@@ -32,6 +33,7 @@ function SellerHome() {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [open, setOpen] = useState(false);
+  const [verification, setVerification] = useState<any>(null);
 
   useEffect(() => {
     if (!loading && !user) router.navigate({ to: "/auth" });
@@ -54,12 +56,14 @@ function SellerHome() {
 
   async function load() {
     if (!user) return;
-    const [{ data: p }, { data: o }] = await Promise.all([
+    const [{ data: p }, { data: o }, { data: v }] = await Promise.all([
       supabase.from("products").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
       supabase.from("seller_orders").select("*").order("created_at", { ascending: false }),
+      (supabase as any).from("verifications").select("status").eq("user_id", user.id).maybeSingle(),
     ]);
     setProducts(p ?? []);
     setOrders((o as any) ?? []);
+    setVerification(v);
   }
 
   async function remove(id: string) {
@@ -73,6 +77,7 @@ function SellerHome() {
   }
 
   const pending = orders.filter((o) => o.status === "pending").length;
+  const isApproved = verification?.status === "approved";
 
   return (
     <AppShell>
@@ -93,9 +98,19 @@ function SellerHome() {
       </section>
 
       <div className="px-5 pt-6">
+        {!isApproved && (
+          <div className="mb-4 p-3 rounded-2xl bg-warm/20 border border-warm/40 flex items-start gap-3">
+            <AlertCircle className="w-4 h-4 text-foreground shrink-0 mt-0.5"/>
+            <div className="flex-1">
+              <div className="text-sm font-semibold">Verification required</div>
+              <p className="text-xs text-muted-foreground">Complete your verification to start posting listings.</p>
+            </div>
+            <Button asChild size="sm" className="rounded-full"><Link to="/seller/verify">Verify</Link></Button>
+          </div>
+        )}
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-bold">Your Products</h2>
-          <Button size="sm" onClick={() => setOpen(true)} className="rounded-full">
+          <Button size="sm" onClick={() => isApproved ? setOpen(true) : router.navigate({ to: "/seller/verify" })} className="rounded-full">
             <Plus className="w-4 h-4 mr-1" /> Post
           </Button>
         </div>
@@ -114,6 +129,7 @@ function SellerHome() {
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm truncate">{p.title}</div>
                   <div className="text-xs text-primary font-bold">{formatPrice(p.price_ugx, p.price_usd, currency)} / {p.unit}</div>
+                  <ModStatusBadge status={p.moderation_status}/>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => remove(p.id)}>
                   <Trash2 className="w-4 h-4 text-destructive" />
@@ -151,5 +167,21 @@ function SellerHome() {
 
       <ProductForm open={open} onOpenChange={setOpen} sellerId={user.id} onSaved={load} />
     </AppShell>
+  );
+}
+
+function ModStatusBadge({ status }: { status?: string | null }) {
+  if (!status) return null;
+  const map: Record<string, string> = {
+    submitted: "bg-muted text-muted-foreground",
+    under_review: "bg-accent/30 text-accent-foreground",
+    approved: "bg-success/30 text-primary",
+    rejected: "bg-destructive/20 text-destructive",
+    requires_changes: "bg-warm/30 text-foreground",
+  };
+  return (
+    <span className={`inline-block text-[9px] uppercase font-bold tracking-wide px-2 py-0.5 rounded-full mt-1 ${map[status] ?? "bg-muted"}`}>
+      {status.replace("_"," ")}
+    </span>
   );
 }
