@@ -4,10 +4,14 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { useCurrency, formatPrice } from "@/lib/currency";
-import { Users, Package, ShoppingBasket, Phone, MapPin, Mail } from "lucide-react";
+import { Users, Package, ShoppingBasket, Phone, MapPin, Mail, BadgeCheck, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
@@ -19,6 +23,9 @@ function AdminPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [verifications, setVerifications] = useState<any[]>([]);
+  const [editProduct, setEditProduct] = useState<any>(null);
+  const [reviewV, setReviewV] = useState<any>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -36,19 +43,24 @@ function AdminPage() {
         load();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "verifications" }, () => {
+        toast.info("Verification activity"); load();
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [isAdmin]);
 
   async function load() {
-    const [o, p, pr] = await Promise.all([
+    const [o, p, pr, v] = await Promise.all([
       supabase.from("orders").select("*, products(title)").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("products").select("*").order("created_at", { ascending: false }),
+      (supabase as any).from("verifications").select("*").order("created_at", { ascending: false }),
     ]);
     setOrders(o.data ?? []);
     setProfiles(p.data ?? []);
     setProducts(pr.data ?? []);
+    setVerifications(v.data ?? []);
   }
 
   function sellerProfileOf(p: any) { return profiles.find((x) => x.id === p.seller_id); }
@@ -67,22 +79,48 @@ function AdminPage() {
   const stats = [
     { label: "Orders", value: orders.length, icon: ShoppingBasket },
     { label: "Users", value: profiles.length, icon: Users },
-    { label: "Products", value: products.length, icon: Package },
+    { label: "Listings", value: products.length, icon: Package },
+    { label: "KYC", value: verifications.filter((v) => v.status === "pending").length, icon: BadgeCheck },
   ];
 
   function buyerOf(o: any) { return profiles.find((p) => p.id === o.buyer_id); }
   function sellerOf(o: any) { return profiles.find((p) => p.id === o.seller_id); }
+
+  const queue = products.filter((p) => p.moderation_status !== "approved" && p.moderation_status !== "rejected");
+
+  async function setVerificationStatus(id: string, status: string, notes?: string) {
+    const v = verifications.find((x) => x.id === id);
+    const { error } = await (supabase as any).from("verifications")
+      .update({ status, admin_notes: notes ?? v?.admin_notes, reviewed_by: user!.id, reviewed_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    await (supabase as any).from("verification_audit").insert({
+      verification_id: id, reviewer_id: user!.id, action: status,
+      previous_status: v?.status, new_status: status, notes,
+    });
+    toast.success("Verification updated");
+    setReviewV(null);
+  }
+
+  async function moderateProduct(id: string, status: string, patch: any = {}) {
+    const { error } = await (supabase as any).from("products")
+      .update({ moderation_status: status, reviewed_by: user!.id, reviewed_at: new Date().toISOString(), ...patch })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(`Listing ${status}`);
+    setEditProduct(null);
+  }
 
   return (
     <AppShell>
       <section className="bg-hero text-primary-foreground px-5 py-6 rounded-b-[2.5rem]">
         <h1 className="font-display text-2xl font-bold">Admin Control</h1>
         <p className="text-xs text-primary-foreground/80">Middleman dashboard · all contacts visible</p>
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="grid grid-cols-4 gap-2 mt-4">
           {stats.map((s) => (
-            <div key={s.label} className="bg-primary-foreground/15 backdrop-blur rounded-2xl p-3 text-center">
+            <div key={s.label} className="bg-primary-foreground/15 backdrop-blur rounded-2xl p-2 text-center">
               <s.icon className="w-4 h-4 mx-auto opacity-70" />
-              <div className="text-xl font-bold mt-1">{s.value}</div>
+              <div className="text-lg font-bold mt-0.5">{s.value}</div>
               <div className="text-[10px] opacity-80">{s.label}</div>
             </div>
           ))}
@@ -91,11 +129,58 @@ function AdminPage() {
 
       <div className="px-5 pt-6">
         <Tabs defaultValue="orders">
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-5 w-full h-auto">
+            <TabsTrigger value="queue" className="text-[11px]">Queue</TabsTrigger>
+            <TabsTrigger value="kyc" className="text-[11px]">KYC</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="products">All</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="queue" className="space-y-2 mt-4">
+            <p className="text-xs text-muted-foreground">Edit, then approve to publish. {queue.length} pending.</p>
+            {queue.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Queue empty 🌾</p>}
+            {queue.map((p) => {
+              const s = profiles.find((x) => x.id === p.seller_id);
+              return (
+                <Card key={p.id} className="p-3 shadow-card border-0 space-y-2">
+                  <div className="flex gap-3">
+                    <div className="w-16 h-16 rounded-xl bg-secondary overflow-hidden shrink-0">
+                      {p.image_url && <img src={p.image_url} alt="" className="w-full h-full object-cover"/>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm truncate">{p.title}</div>
+                      <div className="text-[11px] text-muted-foreground">{p.category} · {p.grade ?? "—"} · {p.variety ?? "—"}</div>
+                      <div className="text-xs font-bold text-primary">{formatPrice(p.price_ugx,p.price_usd,currency)} / {p.unit}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">by {s?.full_name ?? "—"} · {s?.phone ?? ""}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1 rounded-full" onClick={()=>setEditProduct(p)}>Edit & Review</Button>
+                    <Button size="sm" className="flex-1 rounded-full" onClick={()=>moderateProduct(p.id,"approved")}>Approve</Button>
+                    <Button size="sm" variant="destructive" className="rounded-full" onClick={()=>moderateProduct(p.id,"rejected")}>Reject</Button>
+                  </div>
+                </Card>
+              );
+            })}
+          </TabsContent>
+
+          <TabsContent value="kyc" className="space-y-2 mt-4">
+            {verifications.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No verifications yet.</p>}
+            {verifications.map((v) => (
+              <Card key={v.id} className="p-3 shadow-card border-0 space-y-1">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-semibold text-sm">{v.full_legal_name ?? "—"}</div>
+                    <div className="text-[11px] text-muted-foreground">{v.district} · {v.crops}</div>
+                    <div className="text-[11px] text-muted-foreground">{v.contact_number} · {v.momo_network} {v.momo_number}</div>
+                  </div>
+                  <span className="text-[10px] uppercase font-bold tracking-wide bg-secondary px-2 py-0.5 rounded-full">{v.status}</span>
+                </div>
+                <Button size="sm" variant="outline" className="w-full rounded-full mt-1" onClick={()=>setReviewV(v)}>Review</Button>
+              </Card>
+            ))}
+          </TabsContent>
 
           <TabsContent value="orders" className="space-y-2 mt-4">
             {orders.map((o) => {
