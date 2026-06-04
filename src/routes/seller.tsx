@@ -169,3 +169,19 @@ function SellerHome() {
     </AppShell>
   );
 }
+
+function ModStatusBadge({ status }: { status?: string | null }) {
+  if (!status) return null;
+  const map: Record<string, string> = {
+    submitted: "bg-muted text-muted-foreground",
+    under_review: "bg-accent/30 text-accent-foreground",
+    approved: "bg-success/30 text-primary",
+    rejected: "bg-destructive/20 text-destructive",
+    requires_changes: "bg-warm/30 text-foreground",
+  };
+  return (
+    <span className={`inline-block text-[9px] uppercase font-bold tracking-wide px-2 py-0.5 rounded-full mt-1 ${map[status] ?? "bg-muted"}`}>
+      {status.replace("_"," ")}
+    </span>
+  );
+}
