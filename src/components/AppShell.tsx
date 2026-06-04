@@ -1,10 +1,11 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { Store, Package, ShieldCheck, LogOut, Sprout } from "lucide-react";
+import { Store, Package, ShieldCheck, LogOut, Sprout, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { useCurrency } from "@/lib/currency";
 import { Toaster } from "@/components/ui/sonner";
+import { NotificationsBell } from "./NotificationsBell";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, isSeller, isBuyer, profile } = useAuth();
@@ -20,6 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navItems = [
     { to: "/browse", label: "Market", icon: Store, show: true },
     { to: "/seller", label: "My Farm", icon: Sprout, show: isSeller },
+    { to: "/seller/verify", label: "Verify", icon: BadgeCheck, show: isSeller && !isAdmin },
     { to: "/orders", label: "Orders", icon: Package, show: !!user },
     { to: "/admin", label: "Admin", icon: ShieldCheck, show: isAdmin },
   ].filter((i) => i.show);
@@ -29,13 +31,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-20 bg-background/90 backdrop-blur border-b px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img
-            src="/agro-redeem-africa.jpg"
-            alt="Agro Redeem Africa"
-            className="w-10 h-10 rounded-xl object-cover ring-1 ring-border"
+            src="/harvest-hub-logo.svg"
+            alt="Harvest Hub"
+            className="w-10 h-10 rounded-xl ring-1 ring-border"
           />
           <div>
-            <div className="font-display font-bold text-base leading-tight">Agro Redeem</div>
-            <div className="text-[10px] text-muted-foreground -mt-0.5">AFRICA</div>
+            <div className="font-display font-bold text-base leading-tight">Harvest Hub</div>
+            <div className="text-[10px] text-muted-foreground -mt-0.5 tracking-widest">UGANDA</div>
           </div>
         </Link>
         <div className="flex items-center gap-2">
@@ -50,6 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             ))}
           </div>
+          {user && <NotificationsBell userId={user.id} />}
           {user ? (
             <Button size="icon" variant="ghost" onClick={logout} aria-label="Sign out">
               <LogOut className="w-4 h-4" />
@@ -71,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link to="/browse" className="hover:text-primary">Market</Link>
         </div>
         <p className="text-[10px] text-muted-foreground">
-          © {new Date().getFullYear()} Agro Redeem Africa · Transforming agriculture across Africa
+          © {new Date().getFullYear()} Harvest Hub · Where harvests meet trusted buyers
         </p>
       </footer>
 

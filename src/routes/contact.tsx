@@ -12,8 +12,8 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
   head: () => ({
     meta: [
-      { title: "Contact Agro Redeem Africa" },
-      { name: "description", content: "Get in touch with the Agro Redeem Africa team — farmers, buyers and partners welcome." },
+      { title: "Contact Harvest Hub" },
+      { name: "description", content: "Get in touch with the Harvest Hub team — farmers, buyers and partners welcome." },
     ],
   }),
 });
@@ -25,7 +25,7 @@ function ContactPage() {
 
   function send(e: React.FormEvent) {
     e.preventDefault();
-    const subject = encodeURIComponent(`Agro Redeem Africa — message from ${name || "a visitor"}`);
+    const subject = encodeURIComponent(`Harvest Hub — message from ${name || "a visitor"}`);
     const body = encodeURIComponent(`From: ${name} <${email}>\n\n${message}`);
     window.location.href = `mailto:ionmasters14@gmail.com?subject=${subject}&body=${body}`;
     toast.success("Opening your email app…");
@@ -33,7 +33,7 @@ function ContactPage() {
 
   const channels = [
     { icon: Mail, label: "Email", value: "ionmasters14@gmail.com", href: "mailto:ionmasters14@gmail.com" },
-    { icon: Phone, label: "Phone / WhatsApp", value: "+256 700 000 000", href: "tel:+256700000000" },
+    { icon: Phone, label: "Phone / WhatsApp", value: "+256 778 099 000", href: "tel:+256778099000" },
     { icon: MapPin, label: "Head office", value: "Kampala, Uganda" },
     { icon: MessageCircle, label: "Support hours", value: "Mon–Sat · 8am – 7pm EAT" },
   ];

@@ -29,7 +29,7 @@ function Landing() {
             <Sparkles className="w-3 h-3" /> Trusted across Uganda
           </span>
           <h1 className="font-display text-4xl font-bold mt-4 leading-tight">
-            From the farm.<br />Straight to you.
+            Harvest Hub.<br />Verified farms. Trusted trade.
           </h1>
           <p className="mt-2 text-primary-foreground/80 text-sm">
             Real-time marketplace connecting African farmers with buyers — fair prices in UGX & USD.
