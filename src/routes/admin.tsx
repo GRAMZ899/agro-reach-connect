@@ -272,6 +272,93 @@ function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ProductEditDialog product={editProduct} onClose={()=>setEditProduct(null)} onSave={moderateProduct}/>
+      <VerificationReviewDialog v={reviewV} onClose={()=>setReviewV(null)} onAction={setVerificationStatus}/>
     </AppShell>
+  );
+}
+
+function ProductEditDialog({ product, onClose, onSave }:{
+  product: any; onClose: ()=>void; onSave: (id: string, status: string, patch?: any)=>void;
+}) {
+  const [data, setData] = useState<any>(null);
+  useEffect(()=> { setData(product); }, [product?.id]);
+  if (!data) return null;
+  const set = (k: string, v: any) => setData({ ...data, [k]: v });
+  return (
+    <Dialog open={!!product} onOpenChange={(o)=>!o && onClose()}>
+      <DialogContent className="max-w-sm rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle className="font-display">Review & Edit Listing</DialogTitle></DialogHeader>
+        <div className="space-y-2 text-sm">
+          <label className="block"><span className="text-xs">Title</span><Input value={data.title ?? ""} onChange={(e)=>set("title", e.target.value)}/></label>
+          <label className="block"><span className="text-xs">Description</span><Textarea rows={3} value={data.description ?? ""} onChange={(e)=>set("description", e.target.value)}/></label>
+          <div className="grid grid-cols-2 gap-2">
+            <label><span className="text-xs">Price UGX</span><Input type="number" value={data.price_ugx ?? 0} onChange={(e)=>set("price_ugx", Number(e.target.value))}/></label>
+            <label><span className="text-xs">Price USD</span><Input type="number" step="0.01" value={data.price_usd ?? 0} onChange={(e)=>set("price_usd", Number(e.target.value))}/></label>
+            <label><span className="text-xs">Unit</span><Input value={data.unit ?? ""} onChange={(e)=>set("unit", e.target.value)}/></label>
+            <label><span className="text-xs">Qty</span><Input type="number" value={data.quantity_available ?? 0} onChange={(e)=>set("quantity_available", Number(e.target.value))}/></label>
+          </div>
+          <label className="block"><span className="text-xs">Moderation notes (internal)</span><Textarea rows={2} value={data.moderation_notes ?? ""} onChange={(e)=>set("moderation_notes", e.target.value)}/></label>
+          <div className="flex gap-2 pt-2">
+            <Button className="flex-1 rounded-full" onClick={()=>onSave(data.id, "approved", {
+              title: data.title, description: data.description, price_ugx: data.price_ugx, price_usd: data.price_usd,
+              unit: data.unit, quantity_available: data.quantity_available, moderation_notes: data.moderation_notes,
+            })}>Save & Approve</Button>
+            <Button variant="outline" className="rounded-full" onClick={()=>onSave(data.id, "requires_changes", { moderation_notes: data.moderation_notes })}>Request Changes</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function VerificationReviewDialog({ v, onClose, onAction }:{
+  v: any; onClose: ()=>void; onAction: (id: string, status: string, notes?: string)=>void;
+}) {
+  const [notes, setNotes] = useState("");
+  useEffect(()=> setNotes(v?.admin_notes ?? ""), [v?.id]);
+  if (!v) return null;
+  return (
+    <Dialog open={!!v} onOpenChange={(o)=>!o && onClose()}>
+      <DialogContent className="max-w-sm rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle className="font-display">Verification Review</DialogTitle></DialogHeader>
+        <div className="space-y-2 text-sm">
+          <Row label="Name" value={v.full_legal_name}/>
+          <Row label="Phone" value={v.contact_number}/>
+          <Row label="Email" value={v.email}/>
+          <Row label="Location" value={[v.district, v.parish, v.village].filter(Boolean).join(", ")}/>
+          <Row label="Crops" value={v.crops}/>
+          <Row label="Acres" value={v.acres?.toString()}/>
+          <Row label="Bags" value={v.bags_available?.toString()}/>
+          <Row label="Availability" value={v.availability_timeline}/>
+          <Row label="MoMo" value={`${v.momo_network ?? ""} ${v.momo_number ?? ""} (${v.momo_name ?? ""})`}/>
+          {(v.farm_photos?.length || v.crop_photos?.length) ? (
+            <div className="grid grid-cols-3 gap-1 pt-2">
+              {[...(v.farm_photos ?? []), ...(v.crop_photos ?? [])].map((src: string, i: number)=>(
+                <a key={i} href={src} target="_blank" rel="noreferrer"><img src={src} alt="" className="aspect-square w-full object-cover rounded-lg"/></a>
+              ))}
+            </div>
+          ) : null}
+          <label className="block pt-2"><span className="text-xs">Admin notes (visible to farmer)</span>
+            <Textarea rows={2} value={notes} onChange={(e)=>setNotes(e.target.value)}/></label>
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <Button className="rounded-full" onClick={()=>onAction(v.id,"approved",notes)}>Approve</Button>
+            <Button variant="outline" className="rounded-full" onClick={()=>onAction(v.id,"info_required",notes)}>Request Info</Button>
+            <Button variant="outline" className="rounded-full" onClick={()=>onAction(v.id,"suspended",notes)}>Suspend</Button>
+            <Button variant="destructive" className="rounded-full" onClick={()=>onAction(v.id,"rejected",notes)}>Reject</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Row({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="flex justify-between gap-3 text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-right truncate">{value || "—"}</span>
+    </div>
   );
 }
