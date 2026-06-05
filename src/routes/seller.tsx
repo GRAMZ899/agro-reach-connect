@@ -43,13 +43,8 @@ function SellerHome() {
     if (!user) return;
     load();
     const ch = supabase
-      .channel(`seller-${user.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders", filter: `seller_id=eq.${user.id}` },
-        (payload) => {
-          toast.success(`New order received!`, { description: `Quantity: ${(payload.new as any).quantity}` });
-          load();
-        })
-      .on("postgres_changes", { event: "*", schema: "public", table: "products", filter: `seller_id=eq.${user.id}` }, load)
+      .channel(`seller-notif-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);

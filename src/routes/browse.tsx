@@ -22,11 +22,10 @@ function Browse() {
 
   useEffect(() => {
     load();
-    const ch = supabase
-      .channel("public-products")
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    const id = window.setInterval(load, 30000);
+    return () => { window.removeEventListener("focus", onFocus); window.clearInterval(id); };
   }, []);
 
   async function load() {

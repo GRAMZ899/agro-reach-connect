@@ -20,8 +20,8 @@ function OrdersPage() {
   useEffect(() => {
     if (!user) return;
     load();
-    const ch = supabase.channel(`my-orders-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `buyer_id=eq.${user.id}` }, load)
+    const ch = supabase.channel(`orders-notif-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
