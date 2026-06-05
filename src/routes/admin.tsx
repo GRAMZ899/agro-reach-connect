@@ -35,20 +35,16 @@ function AdminPage() {
   }, [user, isAdmin, loading, rolesLoaded, router]);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || !user) return;
     load();
-    const ch = supabase.channel("admin-feed")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        toast.info("Order activity");
+    const ch = supabase.channel(`admin-notif-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => {
         load();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "verifications" }, () => {
-        toast.info("Verification activity"); load();
-      })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [isAdmin]);
+    const id = window.setInterval(load, 30000);
+    return () => { supabase.removeChannel(ch); window.clearInterval(id); };
+  }, [isAdmin, user?.id]);
 
   async function load() {
     const [o, p, pr, v] = await Promise.all([
