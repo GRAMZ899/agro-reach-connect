@@ -37,13 +37,15 @@ function AdminPage() {
   useEffect(() => {
     if (!isAdmin || !user) return;
     load();
+    const onFocus = () => load();
     const ch = supabase.channel(`admin-notif-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => {
         load();
       })
       .subscribe();
     const id = window.setInterval(load, 30000);
-    return () => { supabase.removeChannel(ch); window.clearInterval(id); };
+    window.addEventListener("focus", onFocus);
+    return () => { supabase.removeChannel(ch); window.clearInterval(id); window.removeEventListener("focus", onFocus); };
   }, [isAdmin, user?.id]);
 
   async function load() {
@@ -53,6 +55,11 @@ function AdminPage() {
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       (supabase as any).from("verifications").select("*").order("created_at", { ascending: false }),
     ]);
+    const firstError = o.error ?? p.error ?? pr.error ?? v.error;
+    if (firstError) {
+      toast.error(firstError.message);
+      return;
+    }
     setOrders(o.data ?? []);
     setProfiles(p.data ?? []);
     setProducts(pr.data ?? []);
@@ -100,11 +107,18 @@ function AdminPage() {
 
   async function moderateProduct(id: string, status: string, patch: any = {}) {
     const { error } = await (supabase as any).from("products")
-      .update({ moderation_status: status, reviewed_by: user!.id, reviewed_at: new Date().toISOString(), ...patch })
+      .update({
+        moderation_status: status,
+        reviewed_by: user!.id,
+        reviewed_at: new Date().toISOString(),
+        available: status === "approved" ? true : false,
+        ...patch,
+      })
       .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(`Listing ${status}`);
     setEditProduct(null);
+    load();
   }
 
   return (
