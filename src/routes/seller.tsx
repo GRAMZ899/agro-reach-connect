@@ -10,7 +10,6 @@ import { useCurrency } from "@/lib/currency";
 import { formatPrice } from "@/lib/currency";
 import { ProductForm } from "@/components/ProductForm";
 import { toast } from "sonner";
-import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/seller")({ component: SellerHome });
 
@@ -27,7 +26,7 @@ interface SellerOrder {
 }
 
 function SellerHome() {
-  const { user, isSeller, loading } = useAuth();
+  const { user, isSeller, loading, rolesLoaded } = useAuth();
   const { currency } = useCurrency();
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
@@ -42,20 +41,26 @@ function SellerHome() {
   useEffect(() => {
     if (!user) return;
     load();
+    const onFocus = () => load();
     const ch = supabase
       .channel(`seller-notif-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, load)
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    window.addEventListener("focus", onFocus);
+    return () => { supabase.removeChannel(ch); window.removeEventListener("focus", onFocus); };
   }, [user?.id]);
 
   async function load() {
     if (!user) return;
-    const [{ data: p }, { data: o }, { data: v }] = await Promise.all([
+    const [{ data: p, error: productsError }, { data: o, error: ordersError }, { data: v, error: verificationError }] = await Promise.all([
       supabase.from("products").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
       supabase.from("seller_orders").select("*").order("created_at", { ascending: false }),
       (supabase as any).from("verifications").select("status").eq("user_id", user.id).maybeSingle(),
     ]);
+    if (productsError || ordersError || verificationError) {
+      toast.error(productsError?.message ?? ordersError?.message ?? verificationError?.message ?? "Couldn't refresh your farm");
+      return;
+    }
     setProducts(p ?? []);
     setOrders((o as any) ?? []);
     setVerification(v);
@@ -65,6 +70,10 @@ function SellerHome() {
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Removed");
+  }
+
+  if (loading || !rolesLoaded) {
+    return <AppShell><div className="p-6 text-center text-sm text-muted-foreground">Loading your farm…</div></AppShell>;
   }
 
   if (!user || !isSeller) {
@@ -100,7 +109,7 @@ function SellerHome() {
               <div className="text-sm font-semibold">Verification required</div>
               <p className="text-xs text-muted-foreground">Complete your verification to start posting listings.</p>
             </div>
-            <Button asChild size="sm" className="rounded-full"><Link to="/seller/verify">Verify</Link></Button>
+            <Button size="sm" className="rounded-full" onClick={() => router.navigate({ to: "/seller/verify" })}>Verify</Button>
           </div>
         )}
         <div className="flex items-center justify-between mb-3">
