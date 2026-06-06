@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,8 @@ export function ProductForm({
   sellerId: string;
   onSaved?: () => void;
 }) {
+  const captureInputId = useId();
+  const galleryInputId = useId();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priceUgx, setPriceUgx] = useState("");
@@ -127,20 +129,26 @@ export function ProductForm({
                 </div>
               )}
             </div>
-            <input type="file" accept="image/*" capture="environment" className="hidden"
+            <input id={captureInputId} type="file" accept="image/*" capture="environment" className="hidden"
               onChange={(e) => pick(e.target.files?.[0] ?? null)} />
           </label>
           <div className="grid grid-cols-2 gap-2">
             <Button type="button" variant="outline" size="sm" className="rounded-full"
-              onClick={() => (document.querySelector('input[capture]') as HTMLInputElement)?.click()}>
+              onClick={() => document.getElementById(captureInputId)?.click()}>
               <Camera className="w-4 h-4 mr-1" /> Camera
             </Button>
             <Button type="button" variant="outline" size="sm" className="rounded-full"
-              onClick={() => { const i = document.createElement("input"); i.type="file"; i.accept="image/*";
-                i.onchange = (e: any) => pick(e.target.files?.[0] ?? null); i.click(); }}>
+              onClick={() => document.getElementById(galleryInputId)?.click()}>
               <Upload className="w-4 h-4 mr-1" /> Gallery
             </Button>
           </div>
+          <input
+            id={galleryInputId}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => pick(e.target.files?.[0] ?? null)}
+          />
 
           <div><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Fresh Tomatoes" /></div>
           <div className="grid grid-cols-2 gap-2">
