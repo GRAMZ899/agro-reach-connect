@@ -24,7 +24,6 @@ export function NotificationsBell({ userId }: { userId: string }) {
       .subscribe();
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
-    return () => { supabase.removeChannel(ch); };
     return () => { supabase.removeChannel(ch); window.removeEventListener("focus", onFocus); };
   }, [userId]);
 
