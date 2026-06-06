@@ -72,6 +72,7 @@ function AdminPage() {
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Updated");
+    load();
   }
 
   if (loading || !rolesLoaded) {
@@ -103,6 +104,7 @@ function AdminPage() {
     });
     toast.success("Verification updated");
     setReviewV(null);
+    load();
   }
 
   async function moderateProduct(id: string, status: string, patch: any = {}) {
