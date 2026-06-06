@@ -22,7 +22,10 @@ export function NotificationsBell({ userId }: { userId: string }) {
           setItems((prev) => [n, ...prev].slice(0, 30));
         })
       .subscribe();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
     return () => { supabase.removeChannel(ch); };
+    return () => { supabase.removeChannel(ch); window.removeEventListener("focus", onFocus); };
   }, [userId]);
 
   async function load() {
