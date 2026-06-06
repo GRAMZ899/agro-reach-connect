@@ -10,7 +10,6 @@ import { useCurrency } from "@/lib/currency";
 import { formatPrice } from "@/lib/currency";
 import { ProductForm } from "@/components/ProductForm";
 import { toast } from "sonner";
-import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/seller")({ component: SellerHome });
 
@@ -27,7 +26,7 @@ interface SellerOrder {
 }
 
 function SellerHome() {
-  const { user, isSeller, loading } = useAuth();
+  const { user, isSeller, loading, rolesLoaded } = useAuth();
   const { currency } = useCurrency();
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
@@ -42,20 +41,51 @@ function SellerHome() {
   useEffect(() => {
     if (!user) return;
     load();
+    const onFocus = () => load();
     const ch = supabase
       .channel(`seller-notif-${user.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, load)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        load,
+      )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      supabase.removeChannel(ch);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [user?.id]);
 
   async function load() {
     if (!user) return;
-    const [{ data: p }, { data: o }, { data: v }] = await Promise.all([
-      supabase.from("products").select("*").eq("seller_id", user.id).order("created_at", { ascending: false }),
+    const [
+      { data: p, error: productsError },
+      { data: o, error: ordersError },
+      { data: v, error: verificationError },
+    ] = await Promise.all([
+      supabase
+        .from("products")
+        .select("*")
+        .eq("seller_id", user.id)
+        .order("created_at", { ascending: false }),
       supabase.from("seller_orders").select("*").order("created_at", { ascending: false }),
       (supabase as any).from("verifications").select("status").eq("user_id", user.id).maybeSingle(),
     ]);
+    if (productsError || ordersError || verificationError) {
+      toast.error(
+        productsError?.message ??
+          ordersError?.message ??
+          verificationError?.message ??
+          "Couldn't refresh your farm",
+      );
+      return;
+    }
     setProducts(p ?? []);
     setOrders((o as any) ?? []);
     setVerification(v);
@@ -67,8 +97,22 @@ function SellerHome() {
     toast.success("Removed");
   }
 
+  if (loading || !rolesLoaded) {
+    return (
+      <AppShell>
+        <div className="p-6 text-center text-sm text-muted-foreground">Loading your farm…</div>
+      </AppShell>
+    );
+  }
+
   if (!user || !isSeller) {
-    return <AppShell><div className="p-6 text-center text-sm text-muted-foreground">Sign in as a farmer to access this.</div></AppShell>;
+    return (
+      <AppShell>
+        <div className="p-6 text-center text-sm text-muted-foreground">
+          Sign in as a farmer to access this.
+        </div>
+      </AppShell>
+    );
   }
 
   const pending = orders.filter((o) => o.status === "pending").length;
@@ -95,17 +139,29 @@ function SellerHome() {
       <div className="px-5 pt-6">
         {!isApproved && (
           <div className="mb-4 p-3 rounded-2xl bg-warm/20 border border-warm/40 flex items-start gap-3">
-            <AlertCircle className="w-4 h-4 text-foreground shrink-0 mt-0.5"/>
+            <AlertCircle className="w-4 h-4 text-foreground shrink-0 mt-0.5" />
             <div className="flex-1">
               <div className="text-sm font-semibold">Verification required</div>
-              <p className="text-xs text-muted-foreground">Complete your verification to start posting listings.</p>
+              <p className="text-xs text-muted-foreground">
+                Complete your verification to start posting listings.
+              </p>
             </div>
-            <Button asChild size="sm" className="rounded-full"><Link to="/seller/verify">Verify</Link></Button>
+            <Button
+              size="sm"
+              className="rounded-full"
+              onClick={() => router.navigate({ to: "/seller/verify" })}
+            >
+              Verify
+            </Button>
           </div>
         )}
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-bold">Your Products</h2>
-          <Button size="sm" onClick={() => isApproved ? setOpen(true) : router.navigate({ to: "/seller/verify" })} className="rounded-full">
+          <Button
+            size="sm"
+            onClick={() => (isApproved ? setOpen(true) : router.navigate({ to: "/seller/verify" }))}
+            className="rounded-full"
+          >
             <Plus className="w-4 h-4 mr-1" /> Post
           </Button>
         </div>
@@ -119,12 +175,16 @@ function SellerHome() {
             {products.map((p) => (
               <Card key={p.id} className="p-3 flex gap-3 items-center shadow-card border-0">
                 <div className="w-14 h-14 rounded-xl bg-secondary overflow-hidden shrink-0">
-                  {p.image_url && <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />}
+                  {p.image_url && (
+                    <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm truncate">{p.title}</div>
-                  <div className="text-xs text-primary font-bold">{formatPrice(p.price_ugx, p.price_usd, currency)} / {p.unit}</div>
-                  <ModStatusBadge status={p.moderation_status}/>
+                  <div className="text-xs text-primary font-bold">
+                    {formatPrice(p.price_ugx, p.price_usd, currency)} / {p.unit}
+                  </div>
+                  <ModStatusBadge status={p.moderation_status} />
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => remove(p.id)}>
                   <Trash2 className="w-4 h-4 text-destructive" />
@@ -147,8 +207,12 @@ function SellerHome() {
                     <div className="text-xs text-muted-foreground">Qty: {o.quantity}</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-primary text-sm">{formatPrice(o.total_ugx, o.total_usd, currency)}</div>
-                    <span className="text-[10px] uppercase font-bold tracking-wide bg-accent/30 px-2 py-0.5 rounded-full">{o.status}</span>
+                    <div className="font-bold text-primary text-sm">
+                      {formatPrice(o.total_ugx, o.total_usd, currency)}
+                    </div>
+                    <span className="text-[10px] uppercase font-bold tracking-wide bg-accent/30 px-2 py-0.5 rounded-full">
+                      {o.status}
+                    </span>
                   </div>
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-2">
@@ -175,8 +239,10 @@ function ModStatusBadge({ status }: { status?: string | null }) {
     requires_changes: "bg-warm/30 text-foreground",
   };
   return (
-    <span className={`inline-block text-[9px] uppercase font-bold tracking-wide px-2 py-0.5 rounded-full mt-1 ${map[status] ?? "bg-muted"}`}>
-      {status.replace("_"," ")}
+    <span
+      className={`inline-block text-[9px] uppercase font-bold tracking-wide px-2 py-0.5 rounded-full mt-1 ${map[status] ?? "bg-muted"}`}
+    >
+      {status.replace("_", " ")}
     </span>
   );
 }
