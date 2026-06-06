@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          link: string | null
+          metadata: Json
+          read: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          link?: string | null
+          metadata?: Json
+          read?: boolean
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          metadata?: Json
+          read?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           buyer_id: string
@@ -72,52 +108,109 @@ export type Database = {
       }
       products: {
         Row: {
+          availability_timeline: string
           available: boolean
           category: string | null
           created_at: string
+          delivery_available: boolean
           description: string | null
+          district: string | null
+          grade: string | null
+          harvest_season: string | null
           id: string
           image_url: string | null
           location: string
+          moderation_notes: string | null
+          moderation_status: string
+          moisture_content: string | null
+          negotiable: boolean
+          organic_status: string
+          parish: string | null
+          pickup_available: boolean
           price_ugx: number
           price_usd: number
           quantity_available: number
+          ready_date: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           seller_id: string
+          storage_method: string | null
           title: string
+          transport_assistance: boolean
           unit: string
           updated_at: string
+          variety: string | null
+          village: string | null
         }
         Insert: {
+          availability_timeline?: string
           available?: boolean
           category?: string | null
           created_at?: string
+          delivery_available?: boolean
           description?: string | null
+          district?: string | null
+          grade?: string | null
+          harvest_season?: string | null
           id?: string
           image_url?: string | null
           location: string
+          moderation_notes?: string | null
+          moderation_status?: string
+          moisture_content?: string | null
+          negotiable?: boolean
+          organic_status?: string
+          parish?: string | null
+          pickup_available?: boolean
           price_ugx?: number
           price_usd?: number
           quantity_available?: number
+          ready_date?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           seller_id: string
+          storage_method?: string | null
           title: string
+          transport_assistance?: boolean
           unit?: string
           updated_at?: string
+          variety?: string | null
+          village?: string | null
         }
         Update: {
+          availability_timeline?: string
           available?: boolean
           category?: string | null
           created_at?: string
+          delivery_available?: boolean
           description?: string | null
+          district?: string | null
+          grade?: string | null
+          harvest_season?: string | null
           id?: string
           image_url?: string | null
           location?: string
+          moderation_notes?: string | null
+          moderation_status?: string
+          moisture_content?: string | null
+          negotiable?: boolean
+          organic_status?: string
+          parish?: string | null
+          pickup_available?: boolean
           price_ugx?: number
           price_usd?: number
           quantity_available?: number
+          ready_date?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           seller_id?: string
+          storage_method?: string | null
           title?: string
+          transport_assistance?: boolean
           unit?: string
           updated_at?: string
+          variety?: string | null
+          village?: string | null
         }
         Relationships: []
       }
@@ -175,6 +268,126 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_audit: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_status: string
+          notes: string | null
+          previous_status: string | null
+          reviewer_id: string
+          verification_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_status: string
+          notes?: string | null
+          previous_status?: string | null
+          reviewer_id: string
+          verification_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_status?: string
+          notes?: string | null
+          previous_status?: string | null
+          reviewer_id?: string
+          verification_id?: string
+        }
+        Relationships: []
+      }
+      verifications: {
+        Row: {
+          acres: number | null
+          admin_notes: string | null
+          availability_timeline: string
+          bags_available: number | null
+          contact_number: string
+          created_at: string
+          crop_photos: string[]
+          crops: string
+          custom_availability_date: string | null
+          district: string
+          email: string | null
+          expected_harvest_date: string | null
+          farm_photos: string[]
+          full_legal_name: string
+          id: string
+          momo_name: string | null
+          momo_network: string
+          momo_number: string
+          parish: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          season_production_estimate: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          village: string
+        }
+        Insert: {
+          acres?: number | null
+          admin_notes?: string | null
+          availability_timeline?: string
+          bags_available?: number | null
+          contact_number: string
+          created_at?: string
+          crop_photos?: string[]
+          crops: string
+          custom_availability_date?: string | null
+          district: string
+          email?: string | null
+          expected_harvest_date?: string | null
+          farm_photos?: string[]
+          full_legal_name: string
+          id?: string
+          momo_name?: string | null
+          momo_network?: string
+          momo_number: string
+          parish: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          season_production_estimate?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          village: string
+        }
+        Update: {
+          acres?: number | null
+          admin_notes?: string | null
+          availability_timeline?: string
+          bags_available?: number | null
+          contact_number?: string
+          created_at?: string
+          crop_photos?: string[]
+          crops?: string
+          custom_availability_date?: string | null
+          district?: string
+          email?: string | null
+          expected_harvest_date?: string | null
+          farm_photos?: string[]
+          full_legal_name?: string
+          id?: string
+          momo_name?: string | null
+          momo_network?: string
+          momo_number?: string
+          parish?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          season_production_estimate?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          village?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       seller_orders: {
@@ -203,12 +416,33 @@ export type Database = {
       }
     }
     Functions: {
+      create_notification: {
+        Args: {
+          _body?: string
+          _kind: string
+          _link?: string
+          _metadata?: Json
+          _title: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      notify_admins: {
+        Args: {
+          _body?: string
+          _kind: string
+          _link?: string
+          _metadata?: Json
+          _title: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
