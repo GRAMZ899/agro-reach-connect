@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SellerIndexRouteImport } from './routes/seller.index'
 import { Route as SellerVerifyRouteImport } from './routes/seller.verify'
 
 const SellerRoute = SellerRouteImport.update({
@@ -59,6 +60,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SellerIndexRoute = SellerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SellerRoute,
+} as any)
 const SellerVerifyRoute = SellerVerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof OrdersRoute
   '/seller': typeof SellerRouteWithChildren
   '/seller/verify': typeof SellerVerifyRoute
+  '/seller/': typeof SellerIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -84,8 +91,8 @@ export interface FileRoutesByTo {
   '/browse': typeof BrowseRoute
   '/contact': typeof ContactRoute
   '/orders': typeof OrdersRoute
-  '/seller': typeof SellerRouteWithChildren
   '/seller/verify': typeof SellerVerifyRoute
+  '/seller': typeof SellerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +105,7 @@ export interface FileRoutesById {
   '/orders': typeof OrdersRoute
   '/seller': typeof SellerRouteWithChildren
   '/seller/verify': typeof SellerVerifyRoute
+  '/seller/': typeof SellerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +119,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/seller'
     | '/seller/verify'
+    | '/seller/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -120,8 +129,8 @@ export interface FileRouteTypes {
     | '/browse'
     | '/contact'
     | '/orders'
-    | '/seller'
     | '/seller/verify'
+    | '/seller'
   id:
     | '__root__'
     | '/'
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/seller'
     | '/seller/verify'
+    | '/seller/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -204,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/seller/': {
+      id: '/seller/'
+      path: '/'
+      fullPath: '/seller/'
+      preLoaderRoute: typeof SellerIndexRouteImport
+      parentRoute: typeof SellerRoute
+    }
     '/seller/verify': {
       id: '/seller/verify'
       path: '/verify'
@@ -216,10 +233,12 @@ declare module '@tanstack/react-router' {
 
 interface SellerRouteChildren {
   SellerVerifyRoute: typeof SellerVerifyRoute
+  SellerIndexRoute: typeof SellerIndexRoute
 }
 
 const SellerRouteChildren: SellerRouteChildren = {
   SellerVerifyRoute: SellerVerifyRoute,
+  SellerIndexRoute: SellerIndexRoute,
 }
 
 const SellerRouteWithChildren =

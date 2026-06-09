@@ -1,12 +1,13 @@
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatPrice, type Currency } from "@/lib/currency";
+import { createOrder } from "@/lib/orders.functions";
 import type { ProductRow } from "./ProductCard";
 import { z } from "zod";
 
@@ -39,6 +40,7 @@ export function OrderDialog({
   const [location, setLocation] = useState(defaultLocation ?? "");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const createOrderFn = useServerFn(createOrder);
 
   if (!product) return null;
   const total_ugx = Number(qty || 0) * Number(product.price_ugx || 0);
@@ -57,22 +59,23 @@ export function OrderDialog({
       return;
     }
     setLoading(true);
-    const { error } = await supabase.from("orders").insert({
-      product_id: product!.id,
-      buyer_id: buyerId,
-      quantity: parsed.data.quantity,
-      total_ugx,
-      total_usd,
-      currency,
-      buyer_location: parsed.data.buyer_location,
-      buyer_phone: parsed.data.buyer_phone,
-      notes: parsed.data.notes ?? null,
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
+    try {
+      await createOrderFn({
+        data: {
+          productId: product.id,
+          quantity: parsed.data.quantity,
+          buyerPhone: parsed.data.buyer_phone,
+          buyerLocation: parsed.data.buyer_location,
+          notes: parsed.data.notes ?? null,
+          currency,
+        },
+      });
+    } catch (error: any) {
+      setLoading(false);
+      toast.error(error.message || "Failed to place order");
       return;
     }
+    setLoading(false);
     toast.success("Order placed! The admin will coordinate delivery.");
     onOpenChange(false);
     setQty("1");
