@@ -60,7 +60,6 @@ export function OrderDialog({
     const { error } = await supabase.from("orders").insert({
       product_id: product!.id,
       buyer_id: buyerId,
-      seller_id: product!.seller_id,
       quantity: parsed.data.quantity,
       total_ugx,
       total_usd,
