@@ -62,7 +62,7 @@ export function OrderDialog({
     try {
       await createOrderFn({
         data: {
-          productId: product.id,
+          productId: product!.id,
           quantity: parsed.data.quantity,
           buyerPhone: parsed.data.buyer_phone,
           buyerLocation: parsed.data.buyer_location,
